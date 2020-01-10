@@ -169,13 +169,16 @@ for i=1:N
     Pr1001_succeed(1,i) = succeed1001/tryTimes;
     Pr1000_succeed(1,i) = succeed1000/tryTimes;
     
-    Pr0021_succeed(1,i) = succeed1021/tryTimes;
-    Pr0011_succeed(1,i) = succeed1011/tryTimes;
-    Pr0003_succeed(1,i) = succeed1003/tryTimes;
-    Pr0002_succeed(1,i) = succeed1002/tryTimes;
-    Pr0001_succeed(1,i) = succeed1001/tryTimes;
-    Pr0000_succeed(1,i) = succeed1000/tryTimes;
+    Pr0021_succeed(1,i) = succeed0021/tryTimes;
+    Pr0011_succeed(1,i) = succeed0011/tryTimes;
+    Pr0003_succeed(1,i) = succeed0003/tryTimes;
+    Pr0002_succeed(1,i) = succeed0002/tryTimes;
+    Pr0001_succeed(1,i) = succeed0001/tryTimes;
+    Pr0000_succeed(1,i) = succeed0000/tryTimes;
 end
+
+% plot(Pr0000_succeed,'DisplayName','0000');hold on;plot(Pr0001_succeed,'DisplayName','0001');plot(Pr0002_succeed,'DisplayName','0002');plot(Pr0003_succeed,'DisplayName','0003');plot(Pr0011_succeed,'DisplayName','0011');plot(Pr0021_succeed,'DisplayName','0021');xlabel('抽数');ylabel('毕业概率');title('X抽中能抽出一套装备的概率');hold off;
+plot(Pr1000_succeed,'DisplayName','1000');hold on;plot(Pr1001_succeed,'DisplayName','1001');plot(Pr1002_succeed,'DisplayName','1002');plot(Pr1003_succeed,'DisplayName','1003');plot(Pr1011_succeed,'DisplayName','1011');plot(Pr1021_succeed,'DisplayName','1021');xlabel('抽数');ylabel('毕业概率');title('X抽中能抽出一套装备的概率');hold off;
 % figure;bar(Pr1021_succeed),title('1021')
 % figure;bar(Pr1011_succeed),title('1011')
 % figure;bar(Pr1003_succeed),title('1003')
