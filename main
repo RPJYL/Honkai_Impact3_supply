@@ -1,0 +1,193 @@
+%% main
+clear,clc
+zeroCount=0; %离前次保底次数
+N=200; %一轮抽卡的序列长度
+tryTimes=1e5; %蒙特卡洛试验次数
+
+Num=zeros(tryTimes,N); %初始化出货数量矩阵
+equip=char(zeros(tryTimes,N)); %初始化出货结果字符矩阵
+
+%一轮抽卡的多次模拟
+for i=1:tryTimes
+%     weaponFlag=false; %false: 0开头
+    weaponFlag=true; %true: 1开头
+    %一轮抽卡的序列
+    for j=1:N
+
+        %判断是否出star4
+        if rand < 0.12375 %概率阈值
+            Num(i,j) = 1; %出货标记
+            zeroCount = 0; %重置保底计数
+            
+            % 确定star4结果
+            anchor=rand; %转盘指针
+            if anchor < 0.2 %武器阈值，下同
+                equip(i,j)='w';
+                weaponFlag=true; 
+            elseif 0.2 < anchor && anchor < 0.3
+                equip(i,j)='u';
+            elseif 0.3 < anchor && anchor < 0.4
+                equip(i,j)='m';
+            elseif 0.4 < anchor && anchor < 0.5
+                equip(i,j)='b';
+            else
+                equip(i,j)='o';
+            end
+        else %未出
+            zeroCount = zeroCount + 1; %保底计数+1
+        end
+        if zeroCount == 10 %抵达保底次数
+            Num(i,j) = 1; %出货
+            zeroCount = 0; %重置保底计数器
+            
+            % 确定star4结果
+            anchor=rand; %转盘指针
+            if anchor < 0.2 %武器阈值，下同
+                equip(i,j)='w';
+                weaponFlag=true; 
+            elseif 0.2 < anchor && anchor < 0.3
+                equip(i,j)='u';
+            elseif 0.3 < anchor && anchor < 0.4
+                equip(i,j)='m';
+            elseif 0.4 < anchor && anchor < 0.5
+                equip(i,j)='b';
+            else
+                equip(i,j)='o';
+            end
+        end
+        % 若未抽到武器，强制60发保底
+        if j==60 && weaponFlag==false
+            Num(i,j)=1;
+            zeroCount = 0; %重置保底计数
+            equip(i,j)='w';
+            weaponFlag=true; 
+        end
+    end    
+end
+
+% 现状分布
+% 初始化概率矩阵
+Pr1021_succeed = zeros(1,N);
+Pr1011_succeed = zeros(1,N);
+Pr1003_succeed = zeros(1,N);
+Pr1002_succeed = zeros(1,N);
+Pr1001_succeed = zeros(1,N);
+Pr1000_succeed = zeros(1,N);
+
+Pr0021_succeed = zeros(1,N);
+Pr0011_succeed = zeros(1,N);
+Pr0003_succeed = zeros(1,N);
+Pr0002_succeed = zeros(1,N);
+Pr0001_succeed = zeros(1,N);
+Pr0000_succeed = zeros(1,N);
+for i=1:N
+    succeed1021=0;
+    succeed1011=0;
+    succeed1003=0;
+    succeed1002=0;
+    succeed1001=0;
+    succeed1000=0;
+    
+    succeed0021=0;
+    succeed0011=0;
+    succeed0003=0;
+    succeed0002=0;
+    succeed0001=0;
+    succeed0000=0;
+    
+    w=zeros(tryTimes,N);
+    u=zeros(tryTimes,N);
+    m=zeros(tryTimes,N);
+    b=zeros(tryTimes,N);
+    
+    %i次抽卡的不同可能
+    for j=1:tryTimes
+        w(j,i)=length(find(equip(j,1:i)=='w'));
+        u(j,i)=length(find(equip(j,1:i)=='u'));
+        m(j,i)=length(find(equip(j,1:i)=='m'));
+        b(j,i)=length(find(equip(j,1:i)=='b'));
+    end
+    
+    %i次抽卡能毕业的概率
+    %毕业次数/总次数
+
+    for j=1:tryTimes
+        %1021：毕业情况：上位大于等于 or 中位和下位之和大于等于1
+        if u(j,i) >= 1 || (m(j,i)+ b(j,i) >= 1)
+            succeed1021 = succeed1021 + 1;
+        end        
+        %1011：毕业情况：上位大于等于1 or 中位和下位之和大于等于2
+        if u(j,i) >= 1 || (m(j,i)+ b(j,i) >= 2)
+            succeed1011 = succeed1011 + 1;
+        end
+        %1003：毕业情况：上位和中位之和大于等于1
+        if (u(j,i) + m(j,i)) >= 1
+            succeed1003 = succeed1003 + 1;
+        end
+        %1002：毕业情况：两个位置全齐 or 两个位置至少有一个，且三个位置总和大于等于2
+        if (u(j,i)>=1 && m(j,i)>=1) || (u(j,i)+m(j,i)~=0 && u(j,i)+m(j,i)+b(j,i)>=2)
+            succeed1002 = succeed1002 + 1;
+        end        
+        %1001：毕业情况：两个位置全齐 or 两个位置至少有一个，且三个位置总和大于等于3
+        if (u(j,i)>=1 && m(j,i)>=1) || (u(j,i)+m(j,i)~=0 && u(j,i)+m(j,i)+b(j,i)>=3)
+            succeed1001 = succeed1001 + 1;
+        end        
+        %1000：毕业情况：三个位置全齐 or 三个位置至少有两个，且总和大于等于4
+        if (u(j,i)>=1 && m(j,i)>=1 && b(j,i)>=1) || (u(j,i)+m(j,i)~=0 && m(j,i)+b(j,i)~=0 && b(j,i)+u(j,i)~=0 && u(j,i)+m(j,i)+b(j,i)>=4)
+            succeed1000 = succeed1000 + 1;
+        end 
+        
+        %0021：毕业情况：上位大于等于 or 中位和下位之和大于等于1
+        if (u(j,i) >= 1 || (m(j,i)+ b(j,i) >= 1)) && w(j,i)>=1
+            succeed0021 = succeed0021 + 1;
+        end        
+        %0011：毕业情况：上位大于等于1 or 中位和下位之和大于等于2
+        if (u(j,i) >= 1 || (m(j,i)+ b(j,i) >= 2)) && w(j,i)>=1
+            succeed0011 = succeed0011 + 1;
+        end
+        %0003：毕业情况：上位和中位之和大于等于1
+        if (u(j,i) + m(j,i)) >= 1 && w(j,i)>=1
+            succeed0003 = succeed0003 + 1;
+        end
+        %1002：毕业情况：两个位置全齐 or 两个位置至少有一个，且三个位置总和大于等于2
+        if ((u(j,i)>=1 && m(j,i)>=1) || (u(j,i)+m(j,i)~=0 && u(j,i)+m(j,i)+b(j,i)>=2)) && w(j,i)>=1
+            succeed0002 = succeed0002 + 1;
+        end        
+        %0001：毕业情况：两个位置全齐 or 两个位置至少有一个，且三个位置总和大于等于3
+        if ((u(j,i)>=1 && m(j,i)>=1) || (u(j,i)+m(j,i)~=0 && u(j,i)+m(j,i)+b(j,i)>=3)) && w(j,i)>=1
+            succeed0001 = succeed0001 + 1;
+        end        
+        %0000：毕业情况：三个位置全齐 or 三个位置至少有两个，且总和大于等于4
+        if ((u(j,i)>=1 && m(j,i)>=1 && b(j,i)>=1) || (u(j,i)+m(j,i)~=0 && m(j,i)+b(j,i)~=0 && b(j,i)+u(j,i)~=0 && u(j,i)+m(j,i)+b(j,i)>=4)) && w(j,i)>=1
+            succeed0000 = succeed0000 + 1;
+        end 
+    end
+    Pr1021_succeed(1,i) = succeed1021/tryTimes;
+    Pr1011_succeed(1,i) = succeed1011/tryTimes;
+    Pr1003_succeed(1,i) = succeed1003/tryTimes;
+    Pr1002_succeed(1,i) = succeed1002/tryTimes;
+    Pr1001_succeed(1,i) = succeed1001/tryTimes;
+    Pr1000_succeed(1,i) = succeed1000/tryTimes;
+    
+    Pr0021_succeed(1,i) = succeed1021/tryTimes;
+    Pr0011_succeed(1,i) = succeed1011/tryTimes;
+    Pr0003_succeed(1,i) = succeed1003/tryTimes;
+    Pr0002_succeed(1,i) = succeed1002/tryTimes;
+    Pr0001_succeed(1,i) = succeed1001/tryTimes;
+    Pr0000_succeed(1,i) = succeed1000/tryTimes;
+end
+% figure;bar(Pr1021_succeed),title('1021')
+% figure;bar(Pr1011_succeed),title('1011')
+% figure;bar(Pr1003_succeed),title('1003')
+% figure;bar(Pr1002_succeed),title('1002')
+% figure;bar(Pr1001_succeed),title('1001')
+% figure;bar(Pr1000_succeed),title('1000')
+% 
+% figure;bar(Pr1021_succeed),title('0021')
+% figure;bar(Pr1011_succeed),title('0011')
+% figure;bar(Pr1003_succeed),title('0003')
+% figure;bar(Pr1002_succeed),title('0002')
+% figure;bar(Pr1001_succeed),title('0001')
+% figure;bar(Pr1000_succeed),title('0000')
+
+
